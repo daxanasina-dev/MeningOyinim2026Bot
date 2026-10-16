@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEMES ARENA</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #080b18;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    header { padding: 20px 10px; }
+    h1 { color: #35f5c4; margin-bottom: 5px; }
+    #game {
+      width: 100%;
+      height: 55vh;
+      min-height: 330px;
+      display: block;
+      background: #101a31;
+      touch-action: manipulation;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      padding: 15px 5px;
+      font-size: 17px;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 22px;
+      margin: 6px;
+      background: #35f5c4;
+      color: #061019;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .secondary { background: #7865ff; color: white; }
+    #message { color: #ffd76a; min-height: 24px; }
+    footer { padding: 15px; color: #9ca8c5; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚔️ MEMES ARENA</h1>
+    <p>3D uslubidagi jang maydoni</p>
+  </header>
+
+  <canvas id="game"></canvas>
+
+  <div class="stats">
+    <div>❤️ Jon: <span id="hp">100</span></div>
+    <div>🏆 Ball: <span id="score">0</span></div>
+    <div>🪙 MEMES: <span id="coins">0</span></div>
+  </div>
+
+  <div>
+    <button id="attack">⚔️ BOSSga hujum!</button>
+    <button class="secondary" id="heal">❤️ Jonni tiklash</button>
+  </div>
+  <p id="message">Bossni yengish uchun hujum tugmasini bosing!</p>
+  <footer>MEMES ARENA • Demo versiya • TON hali ulanmagan</footer>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    let hp = 100, score = 0, coins = 0;
+    let bossHp = 100, attackFlash = 0;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = canvas.clientWidth * dpr;
+      canvas.height = canvas.clientHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+
+    function draw() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, "#192b50");
+      sky.addColorStop(1, "#080d1d");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      // Arena polining perspektivasi
+      ctx.fillStyle = "#182847";
+      ctx.beginPath();
+      ctx.moveTo(w * .22, h * .35);
+      ctx.lineTo(w * .78, h * .35);
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#28456b";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 8; i++) {
+        let y = h * .38 + i * i * h / 100;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      for (let i = -4; i <= 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(w / 2 + i * 8, h * .35);
+        ctx.lineTo(w / 2 + i * w / 5, h);
+        ctx.stroke();
+      }
+
+      // Boss soyasi
+      ctx.fillStyle = "#050813";
+      ctx.beginPath();
+      ctx.ellipse(w/2, h*.69, w*.19, h*.055, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      // Boss tanasi
+      ctx.fillStyle = "#8738e8";
+      ctx.beginPath();
+      ctx.moveTo(w*.39,h*.48);
+      ctx.lineTo(w*.42,h*.32);
+      ctx.lineTo(w*.58,h*.32);
+      ctx.lineTo(w*.61,h*.48);
+      ctx.lineTo(w*.57,h*.67);
+      ctx.lineTo(w*.43,h*.67);
+      ctx.closePath();
+      ctx.fill();
+
+      // Bosh
+      ctx.fillStyle = "#b66aff";
+      ctx.beginPath();
+      ctx.arc(w/2,h*.29,w*.105,0,Math.PI*2);
+      ctx.fill();
+
+      // Ko'zlar
+      ctx.fillStyle = "#ff355e";
+      ctx.fillRect(w*.455,h*.275,w*.035,5);
+      ctx.fillRect(w*.51,h*.275,w*.035,5);
+
+      // Qurol
+      ctx.save();
+      ctx.translate(w*.59,h*.49);
+      ctx.rotate(-.6);
+      ctx.fillStyle = "#c5d8ed";
+      ctx.fillRect(-4,-h*.15,8,h*.28);
+      ctx.fillStyle = "#35f5c4";
+      ctx.fillRect(-9,-h*.15,18,7);
+      ctx.restore();
+
+      // Boss sog'ligi
+      ctx.fillStyle = "#20263a";
+      ctx.fillRect(w*.2, h*.12, w*.6, 14);
+      ctx.fillStyle = "#ff3f66";
+      ctx.fillRect(w*.2, h*.12, w*.6*bossHp/100, 14);
+      ctx.strokeStyle = "white";
+      ctx.strokeRect(w*.2, h*.12, w*.6, 14);
+
+      ctx.fillStyle = "white";
+      ctx.font = "bold 13px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(bossHp > 0 ? "MEME BOSS • HP " + bossHp : "BOSS YENGILDI!", w/2, h*.09);
+
+      if (attackFlash > 0) {
+        ctx.fillStyle = "#35f5c4";
+        ctx.font = "bold 26px Arial";
+        ctx.fillText("ZAP!", w/2, h*.48);
+        attackFlash--;
+      }
+    }
+
+    function update() {
+      document.getElementById("hp").textContent = hp;
+      document.getElementById("score").textContent = score;
+      document.getElementById("coins").textContent = coins;
+      draw();
+    }
+
+    document.getElementById("attack").addEventListener("click", () => {
+      if (hp <= 0) {
+        document.getElementById("message").textContent =
+          "Jon tugadi. Sahifani yangilang va qayta boshlang.";
+        return;
+      }
+
+      if (bossHp <= 0) {
+        bossHp = 100;
+        document.getElementById("message").textContent =
+          "Yangi boss paydo bo'ldi!";
+        update();
+        return;
+      }
+
+      bossHp = Math.max(0, bossHp - 20);
+      attackFlash = 8;
+
+      if (bossHp === 0) {
+        score += 100;
+        coins += 10;
+        document.getElementById("message").textContent =
+          "Boss yengildi! Demo hisobida +10 MEMES.";
+      } else {
+        hp = Math.max(0, hp - 5);
+        document.getElementById("message").textContent =
+          "Hujum muvaffaqiyatli! Bossning HP: " + bossHp;
+      }
+
+      update();
+    });
+
+    document.getElementById("heal").addEventListener("click", () => {
+      if (hp > 0) {
+        hp = Math.min(100, hp + 20);
+        document.getElementById("message").textContent =
+          "Jon 20 birlikka tiklandi!";
+      }
+      update();
+    });
+
+    window.addEventListener("resize", resize);
+    resize();
+  </script>
+</body>
+</html>
